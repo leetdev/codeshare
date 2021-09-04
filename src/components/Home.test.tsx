@@ -1,9 +1,8 @@
-import React from 'react'
 import {render, screen} from '@testing-library/react'
-import App from './App'
+import {Home} from './Home'
 
 test('renders title element', () => {
-  render(<App/>)
+  render(<Home/>)
   const titleElement = screen.getByText(/codeshare/i)
   expect(titleElement).toBeInTheDocument()
 })

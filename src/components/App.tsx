@@ -1,19 +1,15 @@
-import React from 'react'
+import {BrowserRouter as Router, Switch, Route, Redirect} from 'react-router-dom'
+import {Home} from './Home'
 
-import logo from '../assets/images/logo.svg'
-import '../assets/styles/App.css'
-
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo"/>
-        <p>
-          NKN Codeshare App
-        </p>
-      </header>
-    </div>
-  )
-}
-
-export default App
+export const App = () => (
+  <Router>
+    <Switch>
+      <Route exact path="/">
+        <Home/>
+      </Route>
+      <Route path="*">
+        <Redirect to="/"/>
+      </Route>
+    </Switch>
+  </Router>
+)

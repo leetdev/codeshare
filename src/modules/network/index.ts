@@ -1,10 +1,8 @@
 import {nkn} from '../'
+import type {Document} from '../background/nkn/types'
 
 const network = {
-  test: async () => {
-    console.log(nkn.worker)
-    console.log('received: ' + await nkn.worker.test('marco'))
-  }
+  createDocument: (): Promise<Document> => nkn.worker.createDocument()
 }
 
 export default network

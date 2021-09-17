@@ -2,8 +2,9 @@ declare const self: DedicatedWorkerGlobalScope
 
 export const subscribeDuration = 130000 // ~1 month
 
-const PROTOCOL = self.location?.protocol === 'https:' ? 'https:' : 'http:'
-const SEED_ADDRESSES = PROTOCOL === 'https:'
+export const tls = self.location?.protocol === 'https:'
+
+const SEED_ADDRESSES = tls
   ? ['https://mainnet-rpc-node-0001.nkn.org/mainnet/api/wallet']
   : [
     'http://mainnet-seed-0001.nkn.org:30003',

@@ -1,18 +1,11 @@
 import * as Comlink from 'comlink'
 import {NKN} from './nkn'
-import {NknWorker} from './types'
+import type {Document, NknWorker} from './types'
 
-interface PrivateMembers {
-  _nkn: NKN
-}
+const instance = new NKN()
 
-const nkn: NknWorker & PrivateMembers = {
-  _nkn: new NKN(),
-
-  test(msg) {
-    console.log('sw: ' + msg)
-    return 'polo'
-  }
+const nkn: NknWorker = {
+  createDocument: (): Promise<Document> => instance.createDocument()
 }
 
 Comlink.expose(nkn)

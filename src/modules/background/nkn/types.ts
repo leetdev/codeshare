@@ -1,3 +1,10 @@
 export interface NknWorker {
-  test(message: string): string
+  createDocument(): Promise<Document>
+}
+
+export interface Document {
+  id: string
+  title: string
+  // syntax:
+  tabSize: number
 }

@@ -1,11 +1,12 @@
 import {Dexie} from 'dexie'
-import type {Document} from '../background/nkn/types'
+import {Document} from './models/document'
 
 export {Data} from './models/data'
+export {Document}
 
 class Db extends Dexie {
-  data?: Dexie.Table<IData>
-  documents?: Dexie.Table<Document>
+  data: Dexie.Table<IData>
+  documents: Dexie.Table<Document>
 
   constructor() {
     super('nknCodeshare')
@@ -14,10 +15,15 @@ class Db extends Dexie {
       data: '&name',
       documents: '&id',
     })
+
+    this.data = this.table('data')
+
+    this.documents = this.table('documents')
+    this.documents.mapToClass(Document)
   }
 }
 
-interface IData {
+export interface IData {
   name: string,
   value: string,
 }

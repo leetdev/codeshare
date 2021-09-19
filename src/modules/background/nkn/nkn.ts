@@ -1,7 +1,7 @@
-import {MultiClient, util, Wallet} from 'nkn-sdk'
-import {db, Data} from '../../database'
+import {MultiClient, Wallet} from 'nkn-sdk'
+import {generateDocumentId} from '../../../utils'
+import {Data, Document} from '../../database'
 import {rpcServerAddr, tls} from './config'
-import type {Document} from './types'
 
 const SEED_KEY = 'seed'
 
@@ -15,18 +15,11 @@ export class NKN {
 
     let id, isValid
     do {
-      id = util.randomBytesHex(16)
+      id = generateDocumentId()
       isValid = ! await client.getSubscribersCount(getTopic(id))
     } while (!isValid)
 
-    const document = {
-      id,
-      title: 'New Document',
-      tabSize: 2,
-    }
-    await this.saveDocument(document)
-
-    return document
+    return await Document.create(id)
   }
 
   private whenConnected(then: Function): Promise<any> {
@@ -67,10 +60,6 @@ export class NKN {
       await Data.set(SEED_KEY, this.client?.getSeed())
       console.log('saving seed: ' + this.client?.getSeed())
     }
-  }
-
-  private saveDocument = async (document: Document): Promise<void> => {
-    await db.documents?.add(document)
   }
 }
 

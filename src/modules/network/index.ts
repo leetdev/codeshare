@@ -1,5 +1,5 @@
 import {nkn} from '../'
-import type {Document} from '../background/nkn/types'
+import {Document} from '../database'
 
 const network = {
   createDocument: (): Promise<Document> => nkn.worker.createDocument()

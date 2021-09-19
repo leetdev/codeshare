@@ -3,8 +3,8 @@ import {Box, Stack} from '@mui/material'
 import {LoadingButton} from '@mui/lab'
 import {useState} from 'react'
 import {useHistory} from 'react-router-dom'
-import {network} from '../modules'
-import Header from '../components/Header'
+import {network} from '@/modules'
+import Header from '@/components/Header'
 
 export default function Home() {
   const [isCreating, setIsCreating] = useState(false)

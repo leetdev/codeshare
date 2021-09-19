@@ -1,6 +1,6 @@
 import {MultiClient, Wallet} from 'nkn-sdk'
-import {generateDocumentId} from '../../../utils'
-import {Data, Document} from '../../database'
+import {Data, Document} from '@/modules/database'
+import {generateDocumentId} from '@/utils'
 import {rpcServerAddr, tls} from './config'
 
 const SEED_KEY = 'seed'

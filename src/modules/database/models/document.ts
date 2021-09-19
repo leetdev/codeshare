@@ -1,4 +1,4 @@
-import {db} from '../'
+import {db} from '@/modules/database'
 
 export interface IDocument {
   id: string

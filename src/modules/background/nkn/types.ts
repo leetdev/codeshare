@@ -1,4 +1,4 @@
-import {Document} from '../../database'
+import {Document} from '@/modules/database'
 
 export interface NknWorker {
   createDocument(): Promise<Document>

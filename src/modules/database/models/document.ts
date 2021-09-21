@@ -1,9 +1,10 @@
 import {db} from '@/modules/database'
+import {isDefined} from '@/utils'
 
 export interface IDocument {
   id: string
   title: string
-  // syntax:
+  language: number
   tabSize: number
   content: string
 }
@@ -11,15 +12,17 @@ export interface IDocument {
 export class Document implements IDocument {
   id: string
   title: string = 'New Document'
-  tabSize: number = 2
+  language: number = -1
+  tabSize: number = 1
   content: string = ''
 
-  constructor(id: string, title?: string, tabSize?: number, content?: string) {
+  constructor(id: string, title?: string, language?: number, tabSize?: number, content?: string) {
     this.id = id
 
-    if (title) this.title = title
-    if (tabSize) this.tabSize = tabSize
-    if (content) this.content = content
+    if (isDefined(title)) this.title = title as string
+    if (isDefined(language)) this.language = language as number
+    if (isDefined(tabSize)) this.tabSize = tabSize as number
+    if (isDefined(content)) this.content = content as string
   }
 
   static async create(id: string): Promise<Document> {
@@ -31,5 +34,13 @@ export class Document implements IDocument {
 
   async save() {
     return db.documents.put(this)
+  }
+
+  static async find(id: string): Promise<Document | null> {
+    return await db.documents.where({id}).first() || null
+  }
+
+  static async findOrCreate(id: string): Promise<Document> {
+    return await Document.find(id) || await Document.create(id)
   }
 }

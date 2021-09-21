@@ -8,7 +8,7 @@ interface Props {
 }
 
 const Header = ({children}: Props): ReactElement<Props> => (
-  <Box display="flex" flexDirection="column" justifyContent="space-between" sx={{
+  <Box display="flex" flexDirection="row" justifyContent="space-between" sx={{
     bgcolor: 'background.paper',
     padding: 1,
   }}>
@@ -22,7 +22,7 @@ const Header = ({children}: Props): ReactElement<Props> => (
         <Typography variant="h5" display="inline">nkn codeshare</Typography>
       </Link>
     </Box>
-    <Box>{children}</Box>
+    <Box flexGrow={1} marginLeft={4}>{children}</Box>
   </Box>
 )
 

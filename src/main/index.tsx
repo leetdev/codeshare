@@ -1,9 +1,10 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import {CssBaseline, ThemeProvider} from '@mui/material'
-import {App} from './components/App'
-import theme from './theme'
-import {reportWebVitals} from './reportWebVitals'
+
+import {App} from '~main/components'
+import theme from '~main/theme'
+import {reportWebVitals} from '~main/reportWebVitals'
 
 ReactDOM.render(
   <React.StrictMode>

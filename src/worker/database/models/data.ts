@@ -1,4 +1,4 @@
-import {db} from '../'
+import {db} from '../index'
 
 export class Data {
   static async get(name: string): Promise<any> {

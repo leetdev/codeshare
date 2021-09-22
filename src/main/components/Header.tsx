@@ -1,7 +1,7 @@
 import {ReactElement, ReactNode} from 'react'
 import {Box, Link, Typography} from '@mui/material'
 
-import logo from '../assets/images/logo.svg'
+import logo from '~main/assets/images/logo.svg'
 
 interface Props {
   children?: ReactNode

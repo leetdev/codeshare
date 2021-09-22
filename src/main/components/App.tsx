@@ -1,9 +1,10 @@
 import {BrowserRouter as Router, Switch, Route, Redirect} from 'react-router-dom'
-import Document from '@/containers/Document'
-import Home from '@/containers/Home'
-import {documentIdPattern} from '@/utils'
 
-export const App = () => (
+import {documentIdPattern} from '~common/utils'
+import Document from '~main/containers/Document'
+import Home from '~main/containers/Home'
+
+const App = () => (
   <Router>
     <Switch>
       <Route exact path="/">
@@ -18,3 +19,5 @@ export const App = () => (
     </Switch>
   </Router>
 )
+
+export default App

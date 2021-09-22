@@ -3,8 +3,8 @@ import {Box, Stack} from '@mui/material'
 import {LoadingButton} from '@mui/lab'
 import {useState} from 'react'
 import {useHistory} from 'react-router-dom'
-import {network} from '@/modules'
-import Header from '@/components/Header'
+import {Header} from '~main/components'
+import {rpc} from '~main/rpc'
 
 export default function Home() {
   const [isCreating, setIsCreating] = useState(false)
@@ -13,7 +13,7 @@ export default function Home() {
   const createDocument = async () => {
     setIsCreating(true)
 
-    const document = await network.createDocument()
+    const document = await rpc.createDocument()
     history.push(`/${document.id}`)
   }
 

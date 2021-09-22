@@ -4,7 +4,7 @@ import {Document} from './models/document'
 export {Data} from './models/data'
 export {Document}
 
-class Db extends Dexie {
+export class Database extends Dexie {
   data: Dexie.Table<IData>
   documents: Dexie.Table<Document>
 
@@ -28,6 +28,6 @@ export interface IData {
   value: string,
 }
 
-export const db = new Db()
+export const db = new Database()
 
 export default db

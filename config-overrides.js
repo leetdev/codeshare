@@ -27,8 +27,10 @@ module.exports = {
       }
     })
 
-    // SOURCE PATH ALIAS
-    config.resolve.alias['@'] = path.resolve(__dirname, 'src')
+    // SOURCE PATH ALIASES
+    config.resolve.alias['~common'] = path.resolve(__dirname, 'src', 'common')
+    config.resolve.alias['~main'] = path.resolve(__dirname, 'src', 'main')
+    config.resolve.alias['~worker'] = path.resolve(__dirname, 'src', 'worker')
 
     return config
   },

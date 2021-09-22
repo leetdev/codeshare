@@ -1,25 +1,18 @@
 import {MultiClient, Wallet} from 'nkn-sdk'
-import {Data, Document} from '@/modules/database'
-import {generateDocumentId} from '@/utils'
+import {NetworkProvider} from '~common/types/rpc/network'
+import {Data} from '~worker/database'
 import {rpcServerAddr, tls} from './config'
 
 const SEED_KEY = 'seed'
 
-export class NKN {
+export class NKN implements NetworkProvider {
   private wallet?: Wallet
   private client?: MultiClient
   private identifier?: string
 
-  async createDocument(): Promise<Document> {
+  async getSubscribersCount(topic: string): Promise<number> {
     const client = await this.getClient()
-
-    let id, isValid
-    do {
-      id = generateDocumentId()
-      isValid = ! await client.getSubscribersCount(getTopic(id))
-    } while (!isValid)
-
-    return await Document.create(id)
+    return await client.getSubscribersCount(getTopic(topic))
   }
 
   private whenConnected(then: Function): Promise<any> {

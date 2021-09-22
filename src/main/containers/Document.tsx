@@ -1,16 +1,17 @@
-import {isDefined} from '@/utils'
-import {useEffect, useState} from 'react'
+import {isDefined} from '~common/utils'
+import {useCallback, useEffect, useState} from 'react'
 import {useParams} from 'react-router-dom'
 import {Box, FormControl, MenuItem, Select, SelectChangeEvent, Typography} from '@mui/material'
-import {Document} from '@/modules/database'
-import Header from '@/components/Header'
-import Editor from '@/components/Editor'
-import {languageOptions} from '@/components/Editor/languages'
+import {rpc} from '~main/rpc'
+import {Editor, Header} from '~main/components'
+import {languageOptions} from '~main/components/Editor/languages'
+
+import type {Document} from '~common/types/rpc/database'
 
 type UpdateFn = (document: Document) => void
 
 interface UseDocumentResults {
-  document: Document
+  document?: Document
   update(fn: UpdateFn): void
 }
 
@@ -30,20 +31,20 @@ class DocumentWrapper {
     }
   }
 
-  save() {
-    if (!this.isSaved) {
-      this.document?.save()
+  async save() {
+    if (!this.isSaved && this.document) {
+      await rpc.saveDocument(this.document)
       this.isSaved = true
     }
   }
 }
 
 const useDocument = (id: string): UseDocumentResults => {
-  const [document, setDocument] = useState<Document>(new Document(id))
+  const [document, setDocument] = useState<Document>()
   const [wrapper] = useState<DocumentWrapper>(new DocumentWrapper())
 
   useEffect(() => {
-    Document.findOrCreate(id).then(_document => {
+    rpc.getDocumentById(id).then(_document => {
       wrapper.setDocument(_document)
       setDocument(_document)
     })
@@ -77,6 +78,10 @@ export default function Doc() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [document])
 
+  const onContentChange = useCallback((value: string) => {
+    update(document => document.content = value)
+  }, [update])
+
   const onLanguageChange = ({target}: SelectChangeEvent) => {
     const value = parseInt(target.value)
     setLanguage(value)
@@ -89,12 +94,6 @@ export default function Doc() {
     setTabSize(value)
 
     update(document => document.tabSize = value)
-  }
-
-  const onContentChange = (value: string) => {
-    if (document && document.content !== value) {
-      update(document => document.content = value)
-    }
   }
 
   return (

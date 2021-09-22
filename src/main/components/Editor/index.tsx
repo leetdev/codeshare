@@ -1,12 +1,12 @@
-import {loadLanguage} from '@/components/Editor/languages'
 import {ReactElement, useEffect, useMemo, useRef, useState} from 'react'
 import {basicSetup} from '@codemirror/basic-setup'
 import {Compartment, EditorState, Extension} from '@codemirror/state'
 import {EditorView, keymap, ViewUpdate} from '@codemirror/view'
 import {indentWithTab} from '@codemirror/commands'
 import {oneDark} from '@codemirror/theme-one-dark'
+import {loadLanguage} from './languages'
 
-import '@/assets/styles/Editor.css'
+import '~main/assets/styles/Editor.css'
 
 type Themes = {
   [name: string]: Extension

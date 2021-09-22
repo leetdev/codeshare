@@ -1,5 +1,5 @@
-import {db} from '@/modules/database'
-import {isDefined} from '@/utils'
+import {db} from '~worker/database'
+import {isDefined} from '~common/utils'
 
 export interface IDocument {
   id: string
@@ -32,15 +32,19 @@ export class Document implements IDocument {
     return document
   }
 
-  async save() {
-    return db.documents.put(this)
-  }
-
   static async find(id: string): Promise<Document | null> {
     return await db.documents.where({id}).first() || null
   }
 
   static async findOrCreate(id: string): Promise<Document> {
     return await Document.find(id) || await Document.create(id)
+  }
+
+  static async put(document: Document) {
+    return db.documents.put(document)
+  }
+
+  async save() {
+    return Document.put(this)
   }
 }

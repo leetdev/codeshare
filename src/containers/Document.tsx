@@ -7,8 +7,57 @@ import Header from '@/components/Header'
 import Editor from '@/components/Editor'
 import {languageOptions} from '@/components/Editor/languages'
 
-let isSaved = true
-let document: Document
+type UpdateFn = (document: Document) => void
+
+interface UseDocumentResults {
+  document: Document
+  update(fn: UpdateFn): void
+}
+
+class DocumentWrapper {
+  document?: Document
+  isSaved: boolean = true
+
+  setDocument(document: Document) {
+    this.document = document
+    this.isSaved = true
+  }
+
+  update(fn: UpdateFn): void {
+    if (this.document) {
+      fn(this.document)
+      this.isSaved = false
+    }
+  }
+
+  save() {
+    if (!this.isSaved) {
+      this.document?.save()
+      this.isSaved = true
+    }
+  }
+}
+
+const useDocument = (id: string): UseDocumentResults => {
+  const [document, setDocument] = useState<Document>(new Document(id))
+  const [wrapper] = useState<DocumentWrapper>(new DocumentWrapper())
+
+  useEffect(() => {
+    Document.findOrCreate(id).then(_document => {
+      wrapper.setDocument(_document)
+      setDocument(_document)
+    })
+
+    const handler = setInterval(wrapper.save.bind(wrapper), 1000)
+    return () => clearInterval(handler)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
+
+  return {
+    document,
+    update: wrapper.update.bind(wrapper),
+  }
+}
 
 export default function Doc() {
   const {id} = useParams<{ id: string }>()
@@ -16,51 +65,35 @@ export default function Doc() {
   const [content, setContent] = useState('')
   const [language, setLanguage] = useState(-1)
   const [tabSize, setTabSize] = useState(2)
-
-  function saveDocument() {
-    if (!isSaved) {
-      document.save()
-      isSaved = true
-    }
-  }
+  const {document, update} = useDocument(id)
 
   useEffect(() => {
-    let handler: NodeJS.Timeout
-
-    Document.findOrCreate(id).then(_document => {
-      document = _document
+    if (document) {
       isDefined(document.title) && setTitle(document.title)
       isDefined(document.language) && setLanguage(document.language)
       isDefined(document.tabSize) && setTabSize(document.tabSize)
       isDefined(document.content) && setContent(document.content)
-
-      handler = setInterval(saveDocument, 1000)
-    })
-
-    return () => clearInterval(handler)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [document])
 
   const onLanguageChange = ({target}: SelectChangeEvent) => {
     const value = parseInt(target.value)
     setLanguage(value)
 
-    document.language = value
-    isSaved = false
+    update(document => document.language = value)
   }
 
   const onTabSizeChange = ({target}: SelectChangeEvent) => {
     const value = parseInt(target.value)
     setTabSize(value)
 
-    document.tabSize = value
-    isSaved = false
+    update(document => document.tabSize = value)
   }
 
   const onContentChange = (value: string) => {
     if (document && document.content !== value) {
-      document.content = value
-      isSaved = false
+      update(document => document.content = value)
     }
   }
 

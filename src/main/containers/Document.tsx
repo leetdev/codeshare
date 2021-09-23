@@ -2,71 +2,17 @@ import {isDefined} from '~common/utils'
 import {useCallback, useEffect, useState} from 'react'
 import {useParams} from 'react-router-dom'
 import {Box, FormControl, MenuItem, Select, SelectChangeEvent, Typography} from '@mui/material'
-import {rpc} from '~main/rpc'
+import {useDocument} from '~main/hooks/useDocument'
 import {Editor, Header} from '~main/components'
 import {languageOptions} from '~main/components/Editor/languages'
 
-import type {Document} from '~common/types/rpc/database'
-
-type UpdateFn = (document: Document) => void
-
-interface UseDocumentResults {
-  document?: Document
-  update(fn: UpdateFn): void
-}
-
-class DocumentWrapper {
-  document?: Document
-  isSaved: boolean = true
-
-  setDocument(document: Document) {
-    this.document = document
-    this.isSaved = true
-  }
-
-  update(fn: UpdateFn): void {
-    if (this.document) {
-      fn(this.document)
-      this.isSaved = false
-    }
-  }
-
-  async save() {
-    if (!this.isSaved && this.document) {
-      await rpc.saveDocument(this.document)
-      this.isSaved = true
-    }
-  }
-}
-
-const useDocument = (id: string): UseDocumentResults => {
-  const [document, setDocument] = useState<Document>()
-  const [wrapper] = useState<DocumentWrapper>(new DocumentWrapper())
-
-  useEffect(() => {
-    rpc.getDocumentById(id).then(_document => {
-      wrapper.setDocument(_document)
-      setDocument(_document)
-    })
-
-    const handler = setInterval(wrapper.save.bind(wrapper), 1000)
-    return () => clearInterval(handler)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id])
-
-  return {
-    document,
-    update: wrapper.update.bind(wrapper),
-  }
-}
-
-export default function Doc() {
+export default function Document() {
   const {id} = useParams<{ id: string }>()
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [language, setLanguage] = useState(-1)
   const [tabSize, setTabSize] = useState(2)
-  const {document, update} = useDocument(id)
+  const {document, update} = useDocument({id})
 
   useEffect(() => {
     if (document) {

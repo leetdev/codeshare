@@ -19,9 +19,9 @@ module.exports = {
       Buffer: ['buffer', 'Buffer'],
     }))
 
-    // FIX MJS MODULE RESOLVING. TODO: COMLINK FIX to remove this issue
+    // FIX MODULE RESOLVING
     config.module.rules.unshift({
-      test: /comlink\.mjs/,
+      test: /\.(js|mjs)/,
       resolve: {
         fullySpecified: false,
       }

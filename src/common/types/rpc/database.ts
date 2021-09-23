@@ -1,6 +1,8 @@
-import type {Document} from '~worker/database'
+import {IData as Data, IDocument as Document} from '~worker/database'
 
-export type {Data, Database, Document} from '~worker/database'
+export type {Data, Document}
+
+export type {Database} from '~worker/database'
 
 export interface DatabaseManager {
   getDocumentById(id: string): Promise<Document>

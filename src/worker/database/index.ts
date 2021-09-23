@@ -1,8 +1,9 @@
 import {Dexie} from 'dexie'
-import {Document} from './models/document'
+import {Document, IDocument} from './models/document'
+import {Data, IData} from './models/data'
 
-export {Data} from './models/data'
-export {Document}
+export {Data, Document}
+export type {IData, IDocument}
 
 export class Database extends Dexie {
   data: Dexie.Table<IData>
@@ -21,11 +22,6 @@ export class Database extends Dexie {
     this.documents = this.table('documents')
     this.documents.mapToClass(Document)
   }
-}
-
-export interface IData {
-  name: string,
-  value: string,
 }
 
 export const db = new Database()

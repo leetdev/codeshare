@@ -1,28 +1,34 @@
+import {IndexableType} from 'dexie'
 import {db} from '~worker/database'
 import {isDefined} from '~common/utils'
 
 export interface IDocument {
   id: string
-  title: string
+  content: string
   language: number
   tabSize: number
-  content: string
+  title: string
+  version: number
+
+  save(): Promise<IndexableType>
 }
 
 export class Document implements IDocument {
   id: string
-  title: string = 'New Document'
+  content: string = ''
   language: number = -1
   tabSize: number = 1
-  content: string = ''
+  title: string = 'New Document'
+  version: number = 0
 
-  constructor(id: string, title?: string, language?: number, tabSize?: number, content?: string) {
+  constructor(id: string, content?: string, language?: number, tabSize?: number, title?: string, version?: number) {
     this.id = id
 
-    if (isDefined(title)) this.title = title as string
+    if (isDefined(content)) this.content = content as string
     if (isDefined(language)) this.language = language as number
     if (isDefined(tabSize)) this.tabSize = tabSize as number
-    if (isDefined(content)) this.content = content as string
+    if (isDefined(title)) this.title = title as string
+    if (isDefined(version)) this.version = version as number
   }
 
   static async create(id: string): Promise<Document> {
@@ -40,11 +46,11 @@ export class Document implements IDocument {
     return await Document.find(id) || await Document.create(id)
   }
 
-  static async put(document: Document) {
+  static async put(document: Document): Promise<IndexableType> {
     return db.documents.put(document)
   }
 
-  async save() {
-    return Document.put(this)
+  async save(): Promise<IndexableType> {
+    return await Document.put(this)
   }
 }

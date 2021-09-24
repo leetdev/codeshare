@@ -1,15 +1,21 @@
 import {NetworkManager, NetworkProvider} from '~common/types/rpc/network'
 import {generateDocumentId} from '~common/utils'
-import {Document} from '~worker/database'
+import {Document} from '~worker/storage/database'
+import {Connection} from './connection'
+
+type Connections = {
+  [id: string]: Connection
+}
 
 class Network implements NetworkManager {
+  connections: Connections = {}
   provider: NetworkProvider
 
   constructor(provider: NetworkProvider) {
     this.provider = provider
   }
 
-  async createDocument(): Promise<Document> {
+  async netDocumentCreate(): Promise<Document> {
     let id, isValid
     do {
       id = generateDocumentId()
@@ -17,6 +23,14 @@ class Network implements NetworkManager {
     } while (!isValid)
 
     return await Document.create(id)
+  }
+
+  async netDocumentStartSession(id: string): Promise<Document> {
+    const document = await Document.findOrCreate(id)
+
+    this.connections[id] = new Connection(document, this.provider)
+
+    return document
   }
 }
 

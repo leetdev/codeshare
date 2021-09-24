@@ -1,9 +1,12 @@
-import type {Document} from '~common/types/rpc/database'
+import type {Document} from './storage'
 
 export interface NetworkProvider {
   getSubscribersCount(topic: string): Promise<number>
+  isSubscribed(topic: string): Promise<boolean>
+  subscribe(topic: string): Promise<string>
 }
 
 export interface NetworkManager {
-  createDocument(): Promise<Document>
+  netDocumentCreate(): Promise<Document>
+  netDocumentStartSession(id: string): Promise<Document>
 }

@@ -1,7 +1,7 @@
-import {MultiClient, Wallet} from 'nkn-sdk'
+import {hash, MultiClient, Wallet} from 'nkn-sdk'
 import {NetworkProvider} from '~common/types/rpc/network'
-import {Data} from '~worker/database'
-import {rpcServerAddr, tls} from './config'
+import {Data} from '~worker/storage/database'
+import {resubThreshold, rpcServerAddr, subscribeDuration, tls} from './config'
 
 const SEED_KEY = 'seed'
 
@@ -15,14 +15,17 @@ export class NKN implements NetworkProvider {
     return await client.getSubscribersCount(getTopic(topic))
   }
 
-  private whenConnected(then: Function): Promise<any> {
-    return new Promise(resolve => {
-      if (this.client?.isReady) {
-        resolve(then())
-      } else {
-        this.client?.onConnect(() => resolve(then()))
-      }
-    })
+  async subscribe(topic: string): Promise<string> {
+    const client = await this.getClient()
+    return await client.subscribe(getTopic(topic), subscribeDuration, client.identifier) as string
+  }
+
+  async isSubscribed(topic: string): Promise<boolean> {
+    const client = await this.getClient()
+    const {height} = await client.getLatestBlock()
+    const {expiresAt} = await client.getSubscription(getTopic(topic), client.addr)
+
+    return !!expiresAt && expiresAt - resubThreshold > height
   }
 
   private async getClient(): Promise<MultiClient> {
@@ -51,9 +54,18 @@ export class NKN implements NetworkProvider {
   private async maybeSaveSeed(): Promise<void> {
     if (!this.wallet) {
       await Data.set(SEED_KEY, this.client?.getSeed())
-      console.log('saving seed: ' + this.client?.getSeed())
     }
+  }
+
+  private whenConnected(then: Function): Promise<any> {
+    return new Promise(resolve => {
+      if (this.client?.isReady) {
+        resolve(then())
+      } else {
+        this.client?.onConnect(() => resolve(then()))
+      }
+    })
   }
 }
 
-const getTopic = (id: string): string => `codeshare_${id}`
+const getTopic = (id: string): string => `codeshare_${hash.sha256(id)}`

@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react'
-import {Document} from '~common/types/rpc/database'
+import {Document} from '~common/types/rpc/storage'
 import {rpc} from '~main/rpc'
 
 type UpdateFn = (document: Document) => void
@@ -36,7 +36,7 @@ class DocumentWrapper {
     if (!this.isSaved && this.document) {
       this.isSaved = true
 
-      await rpc.saveDocument(this.document)
+      await rpc.storageDocumentSave(this.document)
     }
   }
 }
@@ -46,7 +46,7 @@ export const useDocument = ({id}: UseDocumentArgs): UseDocumentResults => {
   const [wrapper] = useState<DocumentWrapper>(new DocumentWrapper())
 
   useEffect(() => {
-    rpc.getDocumentById(id).then(_document => {
+    rpc.netDocumentStartSession(id).then(async _document => {
       wrapper.setDocument(_document)
       setDocument(_document)
     })

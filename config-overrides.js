@@ -7,9 +7,10 @@ module.exports = {
     if (!config.resolve.fallback) {
       config.resolve.fallback = {}
     }
-    config.resolve.fallback.crypto = 'crypto-browserify'
-    config.resolve.fallback.path = 'path-browserify'
-    config.resolve.fallback.stream = 'stream-browserify'
+    config.resolve.fallback.buffer = require.resolve('buffer/')
+    config.resolve.fallback.crypto = require.resolve('crypto-browserify/')
+    config.resolve.fallback.path = require.resolve('path-browserify/')
+    config.resolve.fallback.stream = require.resolve('stream-browserify/')
 
     // PATCHED MODULES
     config.resolve.alias.webworkify = path.resolve(__dirname, 'lib', 'webworkify')

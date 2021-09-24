@@ -1,4 +1,4 @@
 import {NetworkManager} from '~common/types/rpc/network'
-import {DatabaseManager} from '~common/types/rpc/database'
+import {StorageManager} from '~common/types/rpc/storage'
 
-export type RPC = DatabaseManager & NetworkManager
+export type RPC = NetworkManager & StorageManager

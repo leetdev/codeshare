@@ -1,21 +1,19 @@
 import * as Comlink from 'comlink'
 import {RPC} from '~common/types/rpc'
-import Manager from '~worker/database/manager'
+import Storage from '~worker/storage'
 import Network from '~worker/network'
-import {NKN} from '~worker/nkn/nkn'
+import {nkn} from '~worker/network/nkn'
 
-const db = new Manager()
-const network = new Network(
-  new NKN()
-)
+const storage = new Storage()
+const network = new Network(nkn)
 
 const rpc: RPC = {
-  // DATABASE CALLS
-  getDocumentById: async id => await db.getDocumentById(id),
-  saveDocument: async document => await db.saveDocument(document),
+  // STORAGE CALLS
+  storageDocumentSave: async document => await storage.storageDocumentSave(document),
 
   // NETWORK CALLS
-  createDocument: async () => await network.createDocument(),
+  netDocumentCreate: async () => await network.netDocumentCreate(),
+  netDocumentStartSession: async id => await network.netDocumentStartSession(id),
 }
 
 Comlink.expose(rpc)

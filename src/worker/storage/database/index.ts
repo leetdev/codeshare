@@ -25,5 +25,3 @@ export class Database extends Dexie {
 }
 
 export const db = new Database()
-
-export default db

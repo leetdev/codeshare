@@ -1,6 +1,6 @@
 import {IndexableType} from 'dexie'
-import {db} from '~worker/database'
 import {isDefined} from '~common/utils'
+import {db} from '..'
 
 export interface IDocument {
   id: string

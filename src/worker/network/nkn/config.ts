@@ -2,6 +2,8 @@ declare const self: DedicatedWorkerGlobalScope
 
 export const subscribeDuration = 130000 // ~1 month
 
+export const resubThreshold = 20000 // ~5 days
+
 export const tls = self.location?.protocol === 'https:'
 
 const SEED_ADDRESSES = tls

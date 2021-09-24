@@ -13,7 +13,7 @@ export default function Home() {
   const createDocument = async () => {
     setIsCreating(true)
 
-    const document = await rpc.createDocument()
+    const document = await rpc.netDocumentCreate()
     history.push(`/${document.id}`)
   }
 

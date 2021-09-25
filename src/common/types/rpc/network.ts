@@ -12,6 +12,7 @@ export interface NetworkProvider {
   isSubscribed(topic: string): Promise<boolean>
   onMessage<MessageType>(handler: HandlerFunction<MessageType>, includeOwn?: boolean): void
   publish(topic: string, data: any): Promise<void>
+  send(to: string, data: any): Promise<void>
   subscribe(topic: string): Promise<string>
 }
 

@@ -55,6 +55,11 @@ export class NKN implements NetworkProvider {
     })
   }
 
+  async send(to: string, data: any): Promise<void> {
+    await this.untilReady()
+    await this.client.send(to, JSON.stringify(data))
+  }
+
   async subscribe(topic: string): Promise<string> {
     return await this.client.subscribe(getTopic(topic), subscribeDuration, this.client.identifier) as string
   }

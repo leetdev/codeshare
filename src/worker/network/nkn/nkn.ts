@@ -1,37 +1,68 @@
-import {hash, MultiClient, Wallet} from 'nkn-sdk'
-import {NetworkProvider} from '~common/types/rpc/network'
+import {MultiClient, Wallet} from 'nkn-sdk'
+import {HandlerFunction, NetworkProvider} from '~common/types/rpc/network'
+import {digest} from '~common/utils'
 import {Data} from '~worker/storage/database'
 import {resubThreshold, rpcServerAddr, subscribeDuration, tls} from './config'
 
 const SEED_KEY = 'seed'
 
 export class NKN implements NetworkProvider {
-  private wallet?: Wallet
-  private client?: MultiClient
-  private identifier?: string
+  clientAddr: string = ''
 
-  async getSubscribersCount(topic: string): Promise<number> {
-    const client = await this.getClient()
-    return await client.getSubscribersCount(getTopic(topic))
+  private wallet?: Wallet
+  private _client?: MultiClient
+  private identifier?: string
+  private seed?: string
+
+  constructor() {
+    Data.get(SEED_KEY).then(seed => this.seed = seed)
   }
 
-  async subscribe(topic: string): Promise<string> {
-    const client = await this.getClient()
-    return await client.subscribe(getTopic(topic), subscribeDuration, client.identifier) as string
+  async getSubscribers(topic: string): Promise<Array<string>> {
+    const {subscribers, subscribersInTxPool} = await this.client.getSubscribers(getTopic(topic), {
+      txPool: true,
+    })
+    return (subscribers as string[]).concat(subscribersInTxPool as string[] || [])
+  }
+
+  async getSubscribersCount(topic: string): Promise<number> {
+    return await this.client.getSubscribersCount(getTopic(topic))
   }
 
   async isSubscribed(topic: string): Promise<boolean> {
-    const client = await this.getClient()
-    const {height} = await client.getLatestBlock()
-    const {expiresAt} = await client.getSubscription(getTopic(topic), client.addr)
+    const {height} = await this.client.getLatestBlock()
+    const {expiresAt} = await this.client.getSubscription(getTopic(topic), this.client.addr)
 
     return !!expiresAt && expiresAt - resubThreshold > height
   }
 
-  private async getClient(): Promise<MultiClient> {
-    if (!this.client) {
-      this.client = new MultiClient({
-        seed: await this.getSeed(),
+  onMessage<MessageType>(handler: HandlerFunction<MessageType>, includeOwn = false) {
+    this.client.onMessage(async (message) => {
+      console.log({
+        ...message,
+        payload: JSON.parse(message.payload as string),
+      })
+      if (includeOwn || message.src !== this.clientAddr) {
+        await handler(JSON.parse(message.payload as string), message.src)
+      }
+    })
+  }
+
+  async publish(topic: string, data: any): Promise<void> {
+    await this.untilReady()
+    await this.client.publish(getTopic(topic), JSON.stringify(data), {
+      txPool: true,
+    })
+  }
+
+  async subscribe(topic: string): Promise<string> {
+    return await this.client.subscribe(getTopic(topic), subscribeDuration, this.client.identifier) as string
+  }
+
+  private get client(): MultiClient {
+    if (!this._client) {
+      this._client = new MultiClient({
+        seed: this.getSeed(),
         identifier: this.identifier,
         originalClient: true,
         rpcServerAddr,
@@ -39,16 +70,17 @@ export class NKN implements NetworkProvider {
         responseTimeout: 0,
         tls,
       })
-      await this.maybeSaveSeed()
+      this.clientAddr = this._client.addr
+      this.maybeSaveSeed().then()
     }
-    return this.client
+    return this._client
   }
 
-  private async getSeed(): Promise<string | undefined> {
+  private getSeed(): string | undefined {
     if (this.wallet) {
       return this.wallet.getSeed()
     }
-    return await Data.get(SEED_KEY) || undefined
+    return this.seed
   }
 
   private async maybeSaveSeed(): Promise<void> {
@@ -57,15 +89,15 @@ export class NKN implements NetworkProvider {
     }
   }
 
-  private whenConnected(then: Function): Promise<any> {
+  private untilReady(): Promise<void> {
     return new Promise(resolve => {
       if (this.client?.isReady) {
-        resolve(then())
+        resolve()
       } else {
-        this.client?.onConnect(() => resolve(then()))
+        this.client?.onConnect(() => resolve())
       }
     })
   }
 }
 
-const getTopic = (id: string): string => `codeshare_${hash.sha256(id)}`
+const getTopic = (id: string): string => digest(`codeshare_${id}`)

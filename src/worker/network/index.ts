@@ -1,15 +1,11 @@
 import {NetworkManager, NetworkProvider} from '~common/types/rpc/network'
 import {generateDocumentId} from '~common/utils'
 import {Document} from '~worker/storage/database'
-import {Connection} from './connection'
-
-type Connections = {
-  [id: string]: Connection
-}
+import {Session} from './session'
 
 class Network implements NetworkManager {
-  connections: Connections = {}
-  provider: NetworkProvider
+  private readonly provider: NetworkProvider
+  private sessions = new Map<string, Session>()
 
   constructor(provider: NetworkProvider) {
     this.provider = provider
@@ -28,7 +24,7 @@ class Network implements NetworkManager {
   async netDocumentStartSession(id: string): Promise<Document> {
     const document = await Document.findOrCreate(id)
 
-    this.connections[id] = new Connection(document, this.provider)
+    this.sessions.set(id, new Session(document, this.provider))
 
     return document
   }

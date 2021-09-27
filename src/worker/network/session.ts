@@ -8,22 +8,24 @@ import {
   SessionId,
   WelcomeMessage,
 } from '~common/types/protocol'
+import {Authority} from '~worker/network/authority'
 import {Document} from '~worker/storage/database'
 
 export class Session {
-  private readonly id: SessionId
-  private readonly document: Document
-  private readonly provider: NetworkProvider
+  readonly id: SessionId
+  readonly authority: Authority
 
   private handlers: Map<string, MessageHandler<any>>
   private subscribers: string[] = []
   private sessions: Map<SessionId, string> = new Map()
-  private authority: SessionId
 
-  constructor(document: Document, provider: NetworkProvider) {
-    this.id = this.authority = generateSessionId()
-    this.document = document
-    this.provider = provider
+  constructor(
+    private readonly document: Document,
+    private readonly provider: NetworkProvider,
+  ) {
+    this.id = generateSessionId()
+    this.authority = new Authority(this.provider, this)
+    this.authority.transfer(this.id, document.content, document.version)
 
     this.init().then()
 
@@ -46,18 +48,27 @@ export class Session {
         this.sessions.set(sessionId, clientAddr)
 
         if (authority) {
-          this.authority = sessionId
+          this.authority.transfer(sessionId)
         }
       }],
 
     ])
   }
 
+  get documentContent(): string {
+    return this.document.content
+  }
+
+  updateDocument(content: string, version: number) {
+    this.document.content = content
+    this.document.version = version
+  }
+
   private async init() {
     // Register incoming message handler
     this.provider.onMessage<DocumentMessage>(this.onMessage.bind(this), true)
 
-    // Subscribe to topic
+    // Subscribe to the topic
     await this.maybeRenewSubscription()
 
     // Join session
@@ -78,12 +89,12 @@ export class Session {
 
   private async join(): Promise<void> {
     await this.postMessage<JoinMessage>('join', {
-      documentVersion: 0,
+      documentVersion: this.document.version,
     })
   }
 
   private get isAuthority(): boolean {
-    return this.id === this.authority
+    return this.authority.isSelf()
   }
 
   // HANDLE INCOMING MESSAGES

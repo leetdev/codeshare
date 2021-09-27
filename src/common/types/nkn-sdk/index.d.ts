@@ -1,4 +1,5 @@
 declare module 'nkn-sdk' {
+  import {Session} from '@nkn/ncp'
   import {Decimal} from 'decimal.js'
 
   export class MultiClient {
@@ -422,8 +423,6 @@ declare module 'nkn-sdk' {
     ACK = 2,
     SESSION = 3,
   }
-
-  type Session = Object // TODO: import from NCP types
 
   type SessionConfig = Object // TODO: import from NCP types
 

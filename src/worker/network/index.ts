@@ -1,3 +1,4 @@
+import {DocumentUpdate} from '~common/types/protocol'
 import {NetworkManager, NetworkProvider} from '~common/types/rpc/network'
 import {generateDocumentId} from '~common/utils'
 import {Document} from '~worker/storage/database'
@@ -19,6 +20,19 @@ class Network implements NetworkManager {
     } while (!isValid)
 
     return await Document.create(id)
+  }
+
+  async netDocumentPullUpdates(id: string, version: number, callback: (updates: DocumentUpdate[]) => void): Promise<void> {
+    const session = this.sessions.get(id) as Session // TODO: error handling
+    const updates = await session.authority.pullUpdates(version)
+
+    callback(updates)
+  }
+
+  async netDocumentPushUpdates(id: string, version: number, updates: DocumentUpdate[]): Promise<void> {
+    const session = this.sessions.get(id) as Session // TODO: error handling
+
+    await session.authority.pushUpdates(version, updates)
   }
 
   async netDocumentStartSession(id: string): Promise<Document> {

@@ -9,11 +9,13 @@ const network = new Network(nkn)
 
 const rpc: RPC = {
   // STORAGE CALLS
-  storageDocumentSave: async document => await storage.storageDocumentSave(document),
+  storageDocumentSave: document => storage.storageDocumentSave(document),
 
   // NETWORK CALLS
-  netDocumentCreate: async () => await network.netDocumentCreate(),
-  netDocumentStartSession: async id => await network.netDocumentStartSession(id),
+  netDocumentCreate: () => network.netDocumentCreate(),
+  netDocumentPullUpdates: (id, version, callback) => network.netDocumentPullUpdates(id, version, callback),
+  netDocumentPushUpdates: (id, version, updates) => network.netDocumentPushUpdates(id, version, updates),
+  netDocumentStartSession: id => network.netDocumentStartSession(id)
 }
 
 Comlink.expose(rpc)

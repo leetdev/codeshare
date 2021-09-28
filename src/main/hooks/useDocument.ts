@@ -1,6 +1,7 @@
-import {useEffect, useState} from 'react'
+import {useEffect, useRef, useState} from 'react'
 import {Document} from '~common/types/rpc/storage'
-import {rpc} from '~main/rpc'
+import {useWorker} from '~main/hooks/useWorker'
+import {RemoteRPC} from '~main/rpc'
 
 type UpdateFn = (document: Document) => void
 
@@ -19,6 +20,8 @@ class DocumentWrapper {
   document?: Document
   isSaved: boolean = true
 
+  constructor(private readonly rpc: RemoteRPC) {}
+
   setDocument(document: Document) {
     this.document = document
     this.isSaved = true
@@ -36,14 +39,15 @@ class DocumentWrapper {
     if (!this.isSaved && this.document) {
       this.isSaved = true
 
-      await rpc.storageDocumentSave(this.document)
+      await this.rpc.storageDocumentSave(this.document)
     }
   }
 }
 
 export const useDocument = ({id}: UseDocumentArgs): UseDocumentResults => {
+  const {rpc} = useWorker()
   const [document, setDocument] = useState<Document>()
-  const [wrapper] = useState<DocumentWrapper>(new DocumentWrapper())
+  const {current: wrapper} = useRef<DocumentWrapper>(new DocumentWrapper(rpc))
 
   useEffect(() => {
     rpc.netDocumentStartSession(id).then(async _document => {

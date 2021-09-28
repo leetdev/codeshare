@@ -1,5 +1,5 @@
+import {Document} from '~common/types/rpc/storage'
 import {DocumentUpdate} from '~common/types/protocol'
-import type {Document} from './storage'
 
 export interface DirectSession {
   receive(handler: DirectSessionMessageHandlerFunction): void
@@ -18,7 +18,7 @@ export interface MessageHandlerFunction<MessageType> {
   (message: MessageType, clientAddr: string): Promise<void>
 }
 
-export interface NetworkManager {
+export interface NetworkCalls {
   netDocumentCreate(): Promise<Document>
   netDocumentPullUpdates(id: string, version: number, callback: (updates: DocumentUpdate[]) => void): Promise<void>
   netDocumentPushUpdates(id: string, version: number, updates: DocumentUpdate[]): Promise<void>

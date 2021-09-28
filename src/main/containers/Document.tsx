@@ -12,6 +12,7 @@ export default function Document() {
   const [content, setContent] = useState('')
   const [language, setLanguage] = useState(-1)
   const [tabSize, setTabSize] = useState(2)
+  const [isLoaded, setIsLoaded] = useState(false)
   const {document, update} = useDocument({id})
 
   useEffect(() => {
@@ -20,12 +21,16 @@ export default function Document() {
       isDefined(document.language) && setLanguage(document.language)
       isDefined(document.tabSize) && setTabSize(document.tabSize)
       isDefined(document.content) && setContent(document.content)
+      setIsLoaded(true)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [document])
 
   const onContentChange = useCallback((value: string) => {
-    update(document => document.content = value)
+    update(document => {
+      document.content = value
+      document.version++
+    })
   }, [update])
 
   const onLanguageChange = ({target}: SelectChangeEvent) => {
@@ -66,8 +71,8 @@ export default function Document() {
             </FormControl>
             <FormControl variant="standard" sx={{marginLeft: 2}}>
               <Select
-                value={language.toString()}
                 onChange={onLanguageChange}
+                value={language.toString()}
               >
                 <MenuItem key={-1} value="-1">Language</MenuItem>
                 {languageOptions.map((value, index) => (
@@ -83,8 +88,11 @@ export default function Document() {
         position: 'relative',
       }}>
         <Editor
+          documentId={id}
+          isDocumentLoaded={isLoaded}
           language={language}
           onChange={onContentChange}
+          startVersion={document?.version}
           tabSize={tabSize}
           value={content}
         />

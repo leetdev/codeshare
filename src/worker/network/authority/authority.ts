@@ -36,7 +36,8 @@ export class Authority implements AuthorityManager {
   async pullUpdates(version: number): Promise<AuthorityPullUpdatesResponse> {
     const updates = await this.onPullUpdates(version) // TODO: remote
 
-    let text = Text.of([this.session.documentContent])
+    let text = Text.of(this.session.documentContent.split('\n'))
+    console.log(text, updates)
     updates.forEach(update => text = ChangeSet.fromJSON(update.changes).apply(text))
 
     this.session.updateDocument(text.toString(), version)
@@ -50,7 +51,7 @@ export class Authority implements AuthorityManager {
 
   transfer(id: SessionId, document?: string, version?: number): void {
     this.current = id
-    this.document = Text.of([document || ''])
+    this.document = Text.of(document?.split('\n') || [''])
     this.version = version || 0
     this.updates = new Map()
 
@@ -105,6 +106,7 @@ export class Authority implements AuthorityManager {
       }
 
       while (this.pending.length) {
+        console.log('Popping: ', updates)
         this.pending.pop()!(updates)
       }
 

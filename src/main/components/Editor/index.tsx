@@ -4,7 +4,9 @@ import {Compartment, EditorState, Extension} from '@codemirror/state'
 import {EditorView, keymap, ViewUpdate} from '@codemirror/view'
 import {indentWithTab} from '@codemirror/commands'
 import {oneDark} from '@codemirror/theme-one-dark'
+import {useWorker} from '~main/hooks/useWorker'
 import {loadLanguage} from './languages'
+import {peerExtension} from './peerExtension'
 
 import '~main/assets/styles/Editor.css'
 
@@ -17,16 +19,28 @@ export const themes: Themes = {
 }
 
 interface Props {
+  documentId: string,
+  isDocumentLoaded: boolean,
   language?: number
-
-  onChange?(value: string): void
-
+  startVersion?: number
   tabSize?: number
   theme?: string
   value: string
+
+  onChange?(value: string): void
 }
 
-const Editor = ({language = -1, onChange, tabSize = 2, theme = 'One Dark', value}: Props): ReactElement<Props> => {
+const Editor = ({
+  documentId,
+  isDocumentLoaded,
+  language = -1,
+  onChange,
+  startVersion = 0,
+  tabSize = 2,
+  theme = 'One Dark',
+  value,
+}: Props): ReactElement<Props> => {
+  const {rpc} = useWorker()
   const element = useRef<HTMLDivElement>(null)
   const [view, setView] = useState<EditorView>()
   const compartments = useMemo(() => ({
@@ -46,6 +60,7 @@ const Editor = ({language = -1, onChange, tabSize = 2, theme = 'One Dark', value
       compartments.theme.of(themes[theme]),
       compartments.language.of(await loadLanguage(language)),
       compartments.tabSize.of(EditorState.tabSize.of(tabSize)),
+      peerExtension(documentId, startVersion, rpc),
     ]
 
     if (onChange && typeof onChange === 'function') {
@@ -61,41 +76,40 @@ const Editor = ({language = -1, onChange, tabSize = 2, theme = 'One Dark', value
 
   // CODEMIRROR INITIALIZATION
   useEffect(() => {
-    (async function () {
-      if (element.current) {
+    if (isDocumentLoaded && element.current) {
+      composeExtensions().then(extensions => {
         setView(new EditorView({
           state: EditorState.create({
             doc: value,
-            extensions: await composeExtensions(),
+            extensions,
           }),
-          parent: element.current,
+          parent: element.current as HTMLDivElement,
         }))
-      }
-    })()
+      })
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [element])
+  }, [element, isDocumentLoaded])
 
   useEffect(() => {
-    if (view) {
-      view.focus()
-    }
+    view?.focus()
 
     // CLEANUP
     return () => {
-      if (view) {
-        view.destroy()
-      }
+      view?.destroy()
     }
   }, [view])
 
   // VALUE CHANGE
   useEffect(() => {
     if (view) {
-      view.dispatch({
-        changes: {from: 0, to: view.state.doc.toString().length, insert: value || ''},
-      })
+      console.log('New value: ' + value)
+      composeExtensions().then(extensions => view.setState(EditorState.create({
+        doc: value,
+        extensions,
+      })))
     }
-  }, [value, view])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value])
 
   // LANGUAGE CHANGE
   useEffect(() => {

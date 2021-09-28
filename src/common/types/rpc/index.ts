@@ -1,4 +1,4 @@
-import {NetworkManager} from '~common/types/rpc/network'
-import {StorageManager} from '~common/types/rpc/storage'
+import {NetworkCalls} from '~common/types/rpc/network'
+import {StorageCalls} from '~common/types/rpc/storage'
 
-export type RPC = NetworkManager & StorageManager
+export type RPC = NetworkCalls & StorageCalls

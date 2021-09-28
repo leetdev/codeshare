@@ -4,11 +4,12 @@ import {LoadingButton} from '@mui/lab'
 import {useState} from 'react'
 import {useHistory} from 'react-router-dom'
 import {Header} from '~main/components'
-import {rpc} from '~main/rpc'
+import {useWorker} from '~main/hooks/useWorker'
 
 export default function Home() {
   const [isCreating, setIsCreating] = useState(false)
   const history = useHistory()
+  const {rpc} = useWorker()
 
   const createDocument = async () => {
     setIsCreating(true)

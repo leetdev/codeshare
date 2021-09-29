@@ -1,12 +1,14 @@
 declare const self: DedicatedWorkerGlobalScope
 
+export const connectTimeout = 10000
+
 export const subscribeDuration = 130000 // ~1 month
 
 export const resubThreshold = 20000 // ~5 days
 
 export const tls = self.location?.protocol === 'https:'
 
-const SEED_ADDRESSES = tls
+const SEED_ADDRESSES: string[] = 1 //tls // Use default RPC server for now
   ? ['https://mainnet-rpc-node-0001.nkn.org/mainnet/api/wallet']
   : [
     'http://mainnet-seed-0001.nkn.org:30003',
@@ -54,5 +56,5 @@ const SEED_ADDRESSES = tls
     'http://mainnet-seed-0043.nkn.org:30003',
     'http://mainnet-seed-0044.nkn.org:30003',
   ]
-const getRandomSeed = () => SEED_ADDRESSES[Math.floor(Math.random() * SEED_ADDRESSES.length)]
-export const rpcServerAddr = getRandomSeed()
+
+export const rpcServerAddr = () => SEED_ADDRESSES[Math.floor(Math.random() * SEED_ADDRESSES.length)]

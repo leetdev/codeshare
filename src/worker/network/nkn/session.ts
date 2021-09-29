@@ -7,8 +7,12 @@ export class Session implements DirectSession {
 
   constructor(ncpSession: NcpSession) {
     this.ncp = ncpSession
-
+console.log('new session', ncpSession)
     this.read().then()
+  }
+
+  async close(): Promise<void> {
+    await this.ncp.close()
   }
 
   receive(handler: DirectSessionMessageHandlerFunction): void {
@@ -20,8 +24,12 @@ export class Session implements DirectSession {
     const size = messageData.length
     const sizeData = new Uint8Array((new Uint32Array([size]).buffer))
 
-    await this.ncp.write(sizeData)
-    await this.ncp.write(messageData)
+    // concatenate data to prevent race conditions
+    const data = new Uint8Array(sizeData.length + size)
+    data.set(sizeData)
+    data.set(messageData, sizeData.length)
+console.log('send', message)
+    await this.ncp.write(data)
   }
 
   private async read() {
@@ -29,10 +37,9 @@ export class Session implements DirectSession {
       while (!this.ncp.isClosed) {
         const sizeData = await this.ncp.read(4)
         const size = new Uint32Array(sizeData.buffer)[0]
-
         const messageData = await this.ncp.read(size)
         const message = JSON.parse(new TextDecoder().decode(messageData))
-
+console.log('read', message)
         this.handlers.forEach(handler => handler(message))
       }
     } catch (e) {

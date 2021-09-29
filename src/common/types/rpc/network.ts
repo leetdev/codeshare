@@ -1,9 +1,10 @@
 import {Document} from '~common/types/rpc/storage'
-import {DocumentUpdate} from '~common/types/protocol'
+import {DocumentData, DocumentUpdate} from '~common/types/protocol'
 
 export interface DirectSession {
   receive(handler: DirectSessionMessageHandlerFunction): void
   send(message: any): Promise<void>
+  close(): Promise<void>
 }
 
 export interface DirectSessionHandlerFunction {
@@ -18,11 +19,15 @@ export interface MessageHandlerFunction<MessageType> {
   (message: MessageType, clientAddr: string): Promise<void>
 }
 
+export interface GetDocumentCallback {
+  (document: DocumentData): void
+}
+
 export interface NetworkCalls {
   netDocumentCreate(): Promise<Document>
   netDocumentPullUpdates(id: string, version: number, callback: (updates: DocumentUpdate[]) => void): Promise<void>
   netDocumentPushUpdates(id: string, version: number, updates: DocumentUpdate[]): Promise<void>
-  netDocumentStartSession(id: string): Promise<Document>
+  netDocumentStartSession(id: string, onGetDocument: GetDocumentCallback): Promise<Document>
 }
 
 export interface NetworkProvider {
@@ -36,5 +41,8 @@ export interface NetworkProvider {
   onMessage<MessageType>(handler: MessageHandlerFunction<MessageType>, includeOwn?: boolean): void
   publish(topic: string, data: any): Promise<void>
   send(to: string, data: any): Promise<void>
+  startListening(): void
+  setIdentifier(identifier: string): void
+  stopListening(): void
   subscribe(topic: string): Promise<string>
 }

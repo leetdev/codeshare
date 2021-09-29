@@ -12,6 +12,7 @@ export default function Document() {
   const [content, setContent] = useState('')
   const [language, setLanguage] = useState(-1)
   const [tabSize, setTabSize] = useState(2)
+  const [version, setVersion] = useState(0)
   const [isLoaded, setIsLoaded] = useState(false)
   const {document, update} = useDocument({id})
 
@@ -21,6 +22,7 @@ export default function Document() {
       isDefined(document.language) && setLanguage(document.language)
       isDefined(document.tabSize) && setTabSize(document.tabSize)
       isDefined(document.content) && setContent(document.content)
+      isDefined(document.version) && setVersion(document.version)
       setIsLoaded(true)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -92,7 +94,7 @@ export default function Document() {
           isDocumentLoaded={isLoaded}
           language={language}
           onChange={onContentChange}
-          startVersion={document?.version}
+          startVersion={version}
           tabSize={tabSize}
           value={content}
         />

@@ -10,4 +10,6 @@ export const generateDocumentId = (): string => encode(randomBytes(8))
 
 export const generateSessionId = (): SessionId => randomBytes(32).toString('hex')
 
+export const generateMessageId = generateSessionId
+
 export const isDefined = (variable: any): boolean => typeof variable !== 'undefined'

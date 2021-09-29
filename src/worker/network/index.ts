@@ -1,4 +1,5 @@
 import {DocumentUpdate} from '~common/types/protocol'
+import {GetDocumentCallback} from '~common/types/rpc/network'
 import {generateDocumentId} from '~common/utils'
 import {Document} from '~worker/storage/database'
 import {provider} from './config'
@@ -29,10 +30,10 @@ export async function netDocumentPushUpdates(id: string, version: number, update
   await session.authority.pushUpdates(version, updates)
 }
 
-export async function netDocumentStartSession(id: string): Promise<Document> {
+export async function netDocumentStartSession(id: string, onGetDocument: GetDocumentCallback): Promise<Document> {
   const document = await Document.findOrCreate(id)
 
-  sessions.set(id, new Session(document, provider))
+  sessions.set(id, new Session(document, provider, onGetDocument))
 
   return document
 }

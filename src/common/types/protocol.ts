@@ -36,20 +36,28 @@ export interface AuthorityManager {
   isSelf(): boolean
   pullUpdates(version: number): Promise<AuthorityPullUpdatesResponse>
   pushUpdates(version: number, updates: DocumentUpdate[]): Promise<AuthorityPushUpdatesResponse>
-  transfer(id: SessionId, document?: string, version?: number): void
+  transfer(id: SessionId, addr?: string): void
 }
 
 export type AuthorityMessage<Type = {}> = {
+  id: string
+  replyTo?: string
   type: string
-} & Type
+  payload: Type
+}
 
 export interface AuthorityGetDocument {
 }
 
-export interface AuthorityGetDocumentResponse {
+export interface DocumentData {
+  content: string
+  language: number
+  tabSize: number
+  title: string
   version: number
-  document: string
 }
+
+export type AuthorityGetDocumentResponse = DocumentData
 
 export interface AuthorityPullUpdates {
   version: number

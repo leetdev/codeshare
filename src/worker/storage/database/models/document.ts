@@ -3,6 +3,8 @@ import {isDefined} from '~common/utils'
 import {db} from '..'
 
 export interface IDocument {
+  [attribute: string]: any
+
   id: string
   content: string
   language: number

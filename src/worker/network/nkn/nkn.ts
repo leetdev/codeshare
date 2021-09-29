@@ -1,6 +1,7 @@
 import {MultiClient, Wallet} from 'nkn-sdk'
 import {
-  DirectSession, DirectSessionHandlerFunction,
+  DirectSession,
+  DirectSessionHandlerFunction,
   MessageHandlerFunction,
   NetworkProvider,
 } from '~common/types/rpc/network'
@@ -18,6 +19,7 @@ export class NKN implements NetworkProvider {
   private _client?: MultiClient
   private identifier?: string
   private seed?: string
+  private isReady: boolean = false
 
   constructor() {
     Data.get(SEED_KEY).then(seed => this.seed = seed)
@@ -75,6 +77,18 @@ export class NKN implements NetworkProvider {
     await this.client.send(to, JSON.stringify(data))
   }
 
+  startListening(): void {
+    this.client.listen()
+  }
+
+  setIdentifier(identifier: string) {
+    this.identifier = identifier
+  }
+
+  stopListening(): void {
+    this.client.listen([])
+  }
+
   async subscribe(topic: string): Promise<string> {
     return await this.client.subscribe(getTopic(topic), subscribeDuration, this.client.identifier) as string
   }
@@ -82,15 +96,19 @@ export class NKN implements NetworkProvider {
   private get client(): MultiClient {
     if (!this._client) {
       this._client = new MultiClient({
-        seed: this.getSeed(),
+        //seed: this.getSeed(),
         identifier: this.identifier,
         originalClient: true,
-        rpcServerAddr,
+        rpcServerAddr: rpcServerAddr(),
         worker: false,
         responseTimeout: 0,
         tls,
       })
+
+      this._client.onConnect(() => this.isReady = true)
+
       this.clientAddr = this._client.addr
+
       this.maybeSaveSeed().then()
     }
     return this._client
@@ -105,16 +123,16 @@ export class NKN implements NetworkProvider {
 
   private async maybeSaveSeed(): Promise<void> {
     if (!this.wallet) {
-      await Data.set(SEED_KEY, this.client?.getSeed())
+      await Data.set(SEED_KEY, this.client.getSeed())
     }
   }
 
   private untilReady(): Promise<void> {
     return new Promise(resolve => {
-      if (this.client?.isReady) {
+      if (this.isReady) {
         resolve()
       } else {
-        this.client?.onConnect(() => resolve())
+        this.client.onConnect(() => resolve())
       }
     })
   }

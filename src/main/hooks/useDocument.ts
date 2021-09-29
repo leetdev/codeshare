@@ -1,4 +1,5 @@
 import {useEffect, useRef, useState} from 'react'
+import {GetDocumentCallback} from '~common/types/rpc/network'
 import {Document} from '~common/types/rpc/storage'
 import {useWorker} from '~main/hooks/useWorker'
 import {RemoteRPC} from '~main/rpc'
@@ -7,7 +8,6 @@ type UpdateFn = (document: Document) => void
 
 interface UseDocumentArgs {
   id: string
-
 }
 
 interface UseDocumentResults {
@@ -20,11 +20,28 @@ class DocumentWrapper {
   document?: Document
   isSaved: boolean = true
 
-  constructor(private readonly rpc: RemoteRPC) {}
+  constructor(
+    private readonly rpc: RemoteRPC,
+  ) {}
+
+  async save() {
+    if (!this.isSaved && this.document) {
+      this.isSaved = true
+
+      await this.rpc.storageDocumentSave(this.document)
+    }
+  }
 
   setDocument(document: Document) {
     this.document = document
-    this.isSaved = true
+  }
+
+  setDocumentAttributes(attributes: Partial<Document>) {
+    for (const [key, value] of Object.entries(attributes)) {
+      this.document && (this.document[key] = value)
+
+      this.isSaved = false
+    }
   }
 
   update(fn: UpdateFn): void {
@@ -34,24 +51,23 @@ class DocumentWrapper {
       this.isSaved = false
     }
   }
-
-  async save() {
-    if (!this.isSaved && this.document) {
-      this.isSaved = true
-
-      await this.rpc.storageDocumentSave(this.document)
-    }
-  }
 }
 
 export const useDocument = ({id}: UseDocumentArgs): UseDocumentResults => {
-  const {rpc} = useWorker()
+  const {rpc, proxy} = useWorker()
   const [document, setDocument] = useState<Document>()
   const {current: wrapper} = useRef<DocumentWrapper>(new DocumentWrapper(rpc))
 
+  const onGetDocument: GetDocumentCallback = data => {
+    wrapper.setDocumentAttributes(data)
+
+    setDocument(wrapper.document)
+  }
+
   useEffect(() => {
-    rpc.netDocumentStartSession(id).then(async _document => {
+    rpc.netDocumentStartSession(id, proxy(onGetDocument)).then(async _document => {
       wrapper.setDocument(_document)
+
       setDocument(_document)
     })
 

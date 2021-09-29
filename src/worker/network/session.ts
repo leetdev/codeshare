@@ -1,4 +1,4 @@
-import {NetworkProvider} from '~common/types/rpc/network'
+import {GetDocumentCallback, NetworkProvider} from '~common/types/rpc/network'
 import {digest, generateSessionId} from '~common/utils'
 import {
   DocumentMessage,
@@ -22,10 +22,14 @@ export class Session {
   constructor(
     private readonly document: Document,
     private readonly provider: NetworkProvider,
+    onGetDocument: GetDocumentCallback,
   ) {
+    const {content, language, tabSize, title, version} = document
+
     this.id = generateSessionId()
-    this.authority = new Authority(this.provider, this)
-    this.authority.transfer(this.id, document.content, document.version)
+    this.authority = new Authority(this.provider, this, onGetDocument, {content, language, tabSize, title, version})
+
+    this.authority.transfer(this.id)
 
     this.init().then()
 
@@ -48,7 +52,7 @@ export class Session {
         this.sessions.set(sessionId, clientAddr)
 
         if (authority) {
-          this.authority.transfer(sessionId)
+          this.authority.transfer(sessionId, clientAddr)
         }
       }],
 
@@ -65,6 +69,8 @@ export class Session {
   }
 
   private async init() {
+    //this.provider.setIdentifier(this.id)
+
     // Register incoming message handler
     this.provider.onMessage<DocumentMessage>(this.onMessage.bind(this), true)
 

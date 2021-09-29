@@ -4,5 +4,6 @@ declare module '@nkn/ncp' {
 
     read(maxSize: number): Promise<Uint8Array>
     write(b: Uint8Array): Promise<void>
+    close(): Promise<void>
   }
 }

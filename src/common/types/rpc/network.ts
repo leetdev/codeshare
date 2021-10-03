@@ -7,21 +7,15 @@ export interface DirectSession {
   close(): Promise<void>
 }
 
-export interface DirectSessionHandlerFunction {
-  (session: DirectSession): void
-}
+export type DirectSessionHandlerFunction = (session: DirectSession) => void
 
-export interface DirectSessionMessageHandlerFunction {
-  (message: any): void | Promise<void>
-}
+export type DirectSessionMessageHandlerFunction = (message: any) => void | Promise<void>
 
-export interface MessageHandlerFunction<MessageType> {
-  (message: MessageType, clientAddr: string): Promise<void>
-}
+export type DirectSessionCloseHandlerFunction = (session: DirectSession) => void
 
-export interface GetDocumentCallback {
-  (document: DocumentData): void
-}
+export type MessageHandlerFunction<MessageType> = (message: MessageType, clientAddr: string) => Promise<void>
+
+export type GetDocumentCallback = (document: DocumentData) => void
 
 export interface NetworkCalls {
   netDocumentCreate(): Promise<Document>
@@ -33,11 +27,11 @@ export interface NetworkCalls {
 export interface NetworkProvider {
   clientAddr: string
 
-  dial(addr: string): Promise<DirectSession>
+  dial(addr: string, onClose?: DirectSessionCloseHandlerFunction): Promise<DirectSession>
   getSubscribers(topic: string): Promise<Array<string>>
   getSubscribersCount(topic: string): Promise<number>
   isSubscribed(topic: string): Promise<boolean>
-  onSession(handler: DirectSessionHandlerFunction): void
+  onSession(handler: DirectSessionHandlerFunction, onClose?: DirectSessionCloseHandlerFunction): void
   onMessage<MessageType>(handler: MessageHandlerFunction<MessageType>, includeOwn?: boolean): void
   publish(topic: string, data: any): Promise<void>
   send(to: string, data: any): Promise<void>

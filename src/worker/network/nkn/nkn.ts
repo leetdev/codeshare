@@ -1,6 +1,7 @@
 import {MultiClient, Wallet} from 'nkn-sdk'
 import {
   DirectSession,
+  DirectSessionCloseHandlerFunction,
   DirectSessionHandlerFunction,
   MessageHandlerFunction,
   NetworkProvider,
@@ -8,7 +9,7 @@ import {
 import {digest} from '~common/utils'
 import {Session} from '~worker/network/nkn/session'
 import {Data} from '~worker/storage/database'
-import {resubThreshold, rpcServerAddr, subscribeDuration, tls} from './config'
+import {resubThreshold, rpcServerAddr, subscribeDuration} from './config'
 
 const SEED_KEY = 'seed'
 
@@ -25,10 +26,10 @@ export class NKN implements NetworkProvider {
     Data.get(SEED_KEY).then(seed => this.seed = seed)
   }
 
-  async dial(addr: string): Promise<DirectSession> {
+  async dial(addr: string, onClose?: DirectSessionCloseHandlerFunction): Promise<DirectSession> {
     const session = await this.client.dial(addr)
 
-    return new Session(session)
+    return new Session(session, onClose)
   }
 
   async getSubscribers(topic: string): Promise<Array<string>> {
@@ -61,8 +62,8 @@ export class NKN implements NetworkProvider {
     })
   }
 
-  onSession(handler: DirectSessionHandlerFunction) {
-    this.client.onSession(session => handler(new Session(session)))
+  onSession(handler: DirectSessionHandlerFunction, onClose?: DirectSessionCloseHandlerFunction) {
+    this.client.onSession(session => handler(new Session(session, onClose)))
   }
 
   async publish(topic: string, data: any): Promise<void> {
@@ -102,7 +103,7 @@ export class NKN implements NetworkProvider {
         rpcServerAddr: rpcServerAddr(),
         worker: false,
         responseTimeout: 0,
-        tls,
+        tls: false,
       })
 
       this._client.onConnect(() => this.isReady = true)

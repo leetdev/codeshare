@@ -12,18 +12,18 @@ export interface DocumentMessage<Type = {}> extends Message<Type> {
   documentId: string
 }
 
-export interface BasePayload {
+export type Payload<MessageType> = {
   timestamp?: number
-}
+} & MessageType
 
-export type Payload<MessageType = {}> = BasePayload & MessageType
-
-export interface MessageHandler<MessageType> {
-  (payload: Payload<MessageType>, sessionId: SessionId, clientAddr: string): Promise<void>
-}
+export type MessageHandler<MessageType> = (payload: Payload<MessageType>, sessionId: SessionId, clientAddr: string) => Promise<void>
 
 export interface JoinMessage {
   documentVersion: number
+}
+
+export interface NextInLineMessage {
+  id: SessionId | null
 }
 
 export interface WelcomeMessage {
@@ -47,6 +47,7 @@ export type AuthorityMessage<Type = {}> = {
 }
 
 export interface AuthorityGetDocument {
+  sessionId: SessionId
 }
 
 export interface DocumentData {

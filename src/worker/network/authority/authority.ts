@@ -19,6 +19,7 @@ import {Session} from '~worker/network/session'
 
 export class Authority implements AuthorityManager {
   private current: SessionId
+  private nextInLine?: DirectSession
 
   private documentText: Text
   private updates: Map<number, Update> = new Map()
@@ -26,6 +27,7 @@ export class Authority implements AuthorityManager {
 
   private outSession?: DirectSession
   private inSessions: DirectSession[] = []
+  private inSessionIds = new WeakMap<DirectSession, SessionId>()
   private replyQueue = new Map<string, [Function, Function]>()
 
   constructor(
@@ -48,7 +50,7 @@ export class Authority implements AuthorityManager {
       }
 
       session.close().then()
-    })
+    }, this.onCloseInbound.bind(this))
   }
 
   async getDocument(): Promise<AuthorityGetDocumentResponse> {
@@ -58,7 +60,7 @@ export class Authority implements AuthorityManager {
 
     const response = await this.sendAuthorityMessage<AuthorityGetDocument, AuthorityGetDocumentResponse>(
       'getDocument',
-      {},
+      {sessionId: this.session.id},
       this.outSession,
     )
 
@@ -82,6 +84,7 @@ export class Authority implements AuthorityManager {
         this.outSession,
       )
     }
+
     let text = Text.of(this.session.documentContent.split('\n'))
 
     updates.forEach(update => text = ChangeSet.fromJSON(update.changes).apply(text))
@@ -106,21 +109,24 @@ export class Authority implements AuthorityManager {
   transfer(id: SessionId, addr?: string): void {
     console.log('Authority transfer: ' + id)
     this.current = id
+    this.nextInLine = undefined
     this.updates = new Map()
 
-    if (this.isSelf()) {
-      // close incoming sessions
-      while (this.inSessions.length) {
-        this.inSessions.pop()!.close().then()
-      }
+    // close inbound sessions
+    while (this.inSessions.length) {
+      const session = this.inSessions.pop()
 
+      session?.close().then(() => this.inSessionIds.delete(session))
+    }
+
+    if (this.isSelf()) {
       // register listeners
       this.networkProvider.startListening()
     } else {
       this.networkProvider.stopListening()
 
       // establish session & get document
-      this.networkProvider.dial(addr as string).then(async session => {
+      this.networkProvider.dial(addr as string, this.onCloseOutbound.bind(this)).then(async session => {
         while (this.pending.length) {
           this.pending.pop()!([])
         }
@@ -133,6 +139,23 @@ export class Authority implements AuthorityManager {
         this.documentText = Text.of(this.document.content.split('\n'))
       })
     }
+  }
+
+  private onCloseInbound(session: DirectSession) {
+    this.inSessions.splice(this.inSessions.findIndex(element => element === session), 1)
+    this.inSessionIds.delete(session)
+
+    if (session === this.nextInLine) {
+      this.nextInLine = this.inSessions.length ? this.inSessions[0] : undefined
+
+      this.session.postNextInLine(this.nextInLine ? this.inSessionIds.get(this.nextInLine) as string : null).then()
+    }
+  }
+
+  private onCloseOutbound() {
+    this.outSession = undefined
+
+    this.session.nextAuthority()
   }
 
   private selfGetDocument(): AuthorityGetDocumentResponse {
@@ -187,6 +210,14 @@ export class Authority implements AuthorityManager {
 
       switch (message.type) {
         case 'getDocument':
+          payload = message.payload as AuthorityGetDocument
+          if (!this.nextInLine) {
+            this.nextInLine = session
+            this.inSessionIds.set(session, payload.sessionId)
+
+            await this.session.postNextInLine(payload.sessionId)
+          }
+
           return sendAuthorityReply<AuthorityGetDocumentResponse>('reply',
             this.selfGetDocument(),
             session,

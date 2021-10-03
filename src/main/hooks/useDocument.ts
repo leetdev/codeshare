@@ -61,7 +61,7 @@ export const useDocument = ({id}: UseDocumentArgs): UseDocumentResults => {
   const onGetDocument: GetDocumentCallback = data => {
     wrapper.setDocumentAttributes(data)
 
-    setDocument(wrapper.document)
+    setDocument({...wrapper.document as Document})
   }
 
   useEffect(() => {

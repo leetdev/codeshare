@@ -1,6 +1,12 @@
 declare const self: DedicatedWorkerGlobalScope
 
-export const connectTimeout = 10000
+export const KEEPALIVE_PACKET = Uint8Array.of(255, 255, 255, 255)
+
+export const isKeepalive = (packet: Uint8Array) => packet.every(value => value === 255)
+
+export const sessionTimeout = 10000
+
+export const keepaliveInterval = 5000
 
 export const subscribeDuration = 130000 // ~1 month
 

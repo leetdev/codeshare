@@ -4,6 +4,7 @@ import {
   DocumentMessage,
   JoinMessage,
   MessageHandler,
+  NextInLineMessage,
   Payload,
   SessionId,
   WelcomeMessage,
@@ -15,9 +16,11 @@ export class Session {
   readonly id: SessionId
   readonly authority: Authority
 
-  private handlers: Map<string, MessageHandler<any>>
-  private subscribers: string[] = []
+  private handlers: Map<string, MessageHandler<any>> = new Map()
   private sessions: Map<SessionId, string> = new Map()
+  private subscribers: string[] = []
+
+  private nextInLine?: SessionId | null
 
   constructor(
     private readonly document: Document,
@@ -32,35 +35,22 @@ export class Session {
     this.authority.transfer(this.id)
 
     this.init().then()
-
-    this.handlers = new Map([
-
-      ['join', async function (this: Session, {documentVersion}: Payload<JoinMessage>, sessionId, clientAddr) {
-        console.log(`${sessionId}: [JOIN] ${documentVersion}`, this)
-
-        this.sessions.set(sessionId, clientAddr)
-
-        await this.postMessage.bind(this)<WelcomeMessage>('welcome', {
-          authority: this.isAuthority,
-          documentVersion: this.document.version,
-        }, sessionId)
-      }],
-
-      ['welcome', async function (this: Session, {authority, documentVersion}: Payload<WelcomeMessage>, sessionId, clientAddr) {
-        console.log(`${sessionId}: [WELCOME] ${documentVersion}`)
-
-        this.sessions.set(sessionId, clientAddr)
-
-        if (authority) {
-          this.authority.transfer(sessionId, clientAddr)
-        }
-      }],
-
-    ])
   }
 
   get documentContent(): string {
     return this.document.content
+  }
+
+  nextAuthority(): void {
+    if (this.nextInLine) {
+      this.authority.transfer(this.nextInLine, this.sessions.get(this.nextInLine))
+    } else {
+      this.authority.transfer(this.id)
+    }
+  }
+
+  async postNextInLine(id: SessionId | null): Promise<void> {
+    await this.postMessage<NextInLineMessage>('nextInLine', {id})
   }
 
   updateDocument(content: string, version: number) {
@@ -70,6 +60,9 @@ export class Session {
 
   private async init() {
     //this.provider.setIdentifier(this.id)
+
+    // register incoming message handlers
+    this.registerMessageHandlers()
 
     // Register incoming message handler
     this.provider.onMessage<DocumentMessage>(this.onMessage.bind(this), true)
@@ -85,6 +78,35 @@ export class Session {
     if (!this.subscribers.includes(this.provider.clientAddr)) {
       this.subscribers.push(this.provider.clientAddr)
     }
+  }
+
+  private registerMessageHandlers() {
+    this.handlers.set('join', async function (this: Session, {documentVersion}: Payload<JoinMessage>, sessionId, clientAddr) {
+      console.log(`${sessionId}: [JOIN] ${documentVersion}`)
+
+      this.sessions.set(sessionId, clientAddr)
+
+      await this.postMessage.bind(this)<WelcomeMessage>('welcome', {
+        authority: this.isAuthority,
+        documentVersion: this.document.version,
+      }, sessionId)
+    })
+
+    this.handlers.set('welcome', async function (this: Session, {authority, documentVersion}: Payload<WelcomeMessage>, sessionId, clientAddr) {
+      console.log(`${sessionId}: [WELCOME] ${documentVersion}`)
+
+      this.sessions.set(sessionId, clientAddr)
+
+      if (authority) {
+        this.authority.transfer(sessionId, clientAddr)
+      }
+    })
+
+    this.handlers.set('nextInLine', async function (this: Session, {id}: Payload<NextInLineMessage>, sessionId, clientAddr) {
+      console.log(`${sessionId}: [NEXT IN LINE] ${id}`)
+
+      this.nextInLine = id
+    })
   }
 
   private async maybeRenewSubscription() {

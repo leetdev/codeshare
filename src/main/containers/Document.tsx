@@ -1,7 +1,8 @@
+import * as React from 'react'
 import {isDefined} from '~common/utils'
 import {useCallback, useEffect, useState} from 'react'
 import {useParams} from 'react-router-dom'
-import {Box, FormControl, MenuItem, Select, SelectChangeEvent, Typography} from '@mui/material'
+import {Box, FormControl, MenuItem, Select, SelectChangeEvent, TextField, Typography} from '@mui/material'
 import {useDocument} from '~main/hooks/useDocument'
 import {Editor, Header} from '~main/components'
 import {languageOptions} from '~main/components/Editor/languages'
@@ -14,6 +15,7 @@ export default function Document() {
   const [tabSize, setTabSize] = useState(2)
   const [version, setVersion] = useState(0)
   const [isLoaded, setIsLoaded] = useState(false)
+  const [isEditingTitle, setIsEditingTitle] = useState(false)
   const {document, update} = useDocument({id})
 
   useEffect(() => {
@@ -49,6 +51,15 @@ export default function Document() {
     update(document => document.tabSize = value)
   }
 
+  const onStopEditingTitle = () => {
+    if (title.length) {
+      update(document => document.title = title)
+    } else {
+      setTitle(document?.title as string)
+    }
+    setIsEditingTitle(false)
+  }
+
   return (
     <Box display="flex" flexDirection="column" sx={{
       height: '100vh',
@@ -56,7 +67,24 @@ export default function Document() {
       <Header>
         <Box display="flex" flexDirection="row" justifyContent="space-between">
           <Box>
-            <Typography variant="h5">{title}</Typography>
+            {!isEditingTitle ? (
+              <Typography
+                variant="h5"
+                onClick={() => setIsEditingTitle(true)}
+              >
+                {title}
+              </Typography>
+            ) : (
+              <TextField
+                autoFocus
+                onChange={event => setTitle(event.target.value)}
+                onFocus={event => event.target.select()}
+                onBlur={onStopEditingTitle}
+                onKeyPress={event => event.key === 'Enter' && onStopEditingTitle()}
+                value={title}
+                variant="standard"
+              />
+            )}
           </Box>
           <Box flexShrink={1}>
             <FormControl variant="standard" sx={{marginLeft: 2}}>
